@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Sample products — replace with real data from FastAPI later
 const sampleProducts = [
@@ -39,12 +40,15 @@ function ProductCard({ brand, name, price }: {
 // ── Home Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [query, setQuery] = useState("");
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Search:", query);
-    // TODO: call FastAPI and navigate to search results page
-  };
+  e.preventDefault();
+  if (query.trim()) {
+    console.log("Search:", query);  // ← move inside the if
+    navigate(`/search?q=${query}`);
+  }
+};
 
   return (
     <div style={styles.page}>
