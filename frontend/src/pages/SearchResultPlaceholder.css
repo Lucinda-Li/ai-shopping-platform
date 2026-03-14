@@ -1,0 +1,35 @@
+.search-placeholder {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.search-placeholder__card {
+  max-width: 480px;
+  padding: 2rem;
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border-subtle);
+  text-align: center;
+  font-family: var(--font-sans);
+}
+
+.search-placeholder__card h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.search-placeholder__card p {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin: 0 0 1.25rem;
+}
+
+.search-placeholder__card .btn {
+  text-decoration: none;
+}
