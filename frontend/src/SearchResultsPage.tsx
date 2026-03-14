@@ -1,40 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-// Sample results — replace with real data from FastAPI later
-const sampleResults = [
-  { id: 1, brand: "Nike", name: "Air Max 90", price: 129.99 },
-  { id: 2, brand: "Adidas", name: "Ultra Boost 22", price: 189.0 },
-  { id: 3, brand: "New Balance", name: "550 Sneakers", price: 110.0 },
-  { id: 4, brand: "Puma", name: "RS-X Sneaker", price: 95.0 },
-  { id: 5, brand: "Vans", name: "Old Skool", price: 70.0 },
-  { id: 6, brand: "Converse", name: "Chuck Taylor", price: 65.0 },
-  { id: 7, brand: "Reebok", name: "Classic Leather", price: 80.0 },
-  { id: 8, brand: "Jordan", name: "Air Jordan 1", price: 180.0 },
-];
+import { searchClothes } from "./api";
+import type { Product } from "./api";
 
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({id, brand, name, price }: {
-  id: number;
-  brand: string;
-  name: string;
-  price: number;
-}) {
-
-  const navigate = useNavigate();
+function ProductCard({ product }: { product: Product }) {
   return (
-    <div style={styles.card} onClick={() => navigate(`/product/${id}`)}>
-      {/* Image placeholder — replace with <img src={imageUrl} /> when backend is ready */}
-      <div style={styles.cardImg}>
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9CD5FF" strokeWidth="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 9h18M9 21V9" />
-        </svg>
-      </div>
+    <div style={styles.card} onClick={() => window.open(product.link, "_blank")}>
+      {/* Real product image from backend */}
+      {product.image_url ? (
+        <img
+          src={product.image_url}
+          alt={product.title}
+          style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }}
+        />
+      ) : (
+        <div style={styles.cardImg}>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9CD5FF" strokeWidth="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+        </div>
+      )}
       <div style={styles.cardInfo}>
-        <div style={styles.cardBrand}>{brand}</div>
-        <div style={styles.cardName}>{name}</div>
-        <div style={styles.cardPrice}>${price.toFixed(2)}</div>
+        <div style={styles.cardBrand}>{product.store}</div>
+        <div style={styles.cardName}>{product.title}</div>
+        <div style={styles.cardPrice}>{product.price}</div>
+        {product.rating && (
+          <div style={styles.cardRating}>⭐ {product.rating} ({product.reviews})</div>
+        )}
       </div>
     </div>
   );
@@ -44,10 +38,33 @@ function ProductCard({id, brand, name, price }: {
 export default function SearchResultsPage() {
   const navigate = useNavigate();
 
-  // Get search query from URL e.g. /search?q=sneakers
   const params = new URLSearchParams(window.location.search);
   const initialQuery = params.get("q") || "";
+
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [results, setResults] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // ── Fetch results whenever the URL query changes ──
+  useEffect(() => {
+    if (!initialQuery.trim()) return;
+
+    const fetchResults = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await searchClothes({ query: initialQuery, limit: 20 });
+        setResults(data);
+      } catch (err) {
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [initialQuery]); // re-runs every time the query in the URL changes
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,17 +78,14 @@ export default function SearchResultsPage() {
 
       {/* Navbar */}
       <div style={styles.topbar}>
-        {/* Back button */}
         <button style={styles.backBtn} onClick={() => navigate(-1)} title="Back">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
 
-        {/* Brand */}
         <div style={styles.navBrand}>ShopAI.</div>
 
-        {/* Search bar pre-filled with query */}
         <form onSubmit={handleSearch} style={styles.searchWrap}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
@@ -86,18 +100,18 @@ export default function SearchResultsPage() {
           />
         </form>
 
-        {/* Wishlist heart */}
         <button style={styles.iconBtn} title="Wishlist">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF"  stroke="#FF6B8A" strokeWidth="1.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" stroke="#FF6B8A" strokeWidth="1.5">
             <path d="M12 21C12 21 3 14 3 8.5A5.5 5.5 0 0 1 12 5.5 5.5 5.5 0 0 1 21 8.5C21 14 12 21 12 21Z" />
           </svg>
         </button>
       </div>
 
-      {/* Results count + sort */}
+      {/* Results count bar */}
       <div style={styles.resultsBar}>
         <div style={styles.resultsText}>
           Showing results for <span style={styles.resultsQuery}>"{initialQuery}"</span>
+          {!loading && results.length > 0 && ` — ${results.length} items`}
         </div>
         <button style={styles.sortBtn}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3A99E8" strokeWidth="2">
@@ -107,20 +121,31 @@ export default function SearchResultsPage() {
         </button>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div style={styles.centerMsg}>Searching for "{initialQuery}"...</div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div style={styles.centerMsg}>{error}</div>
+      )}
+
+      {/* Empty state */}
+      {!loading && !error && results.length === 0 && (
+        <div style={styles.centerMsg}>No results found for "{initialQuery}"</div>
+      )}
+
       {/* Cards grid */}
-      <div style={styles.cardsArea}>
-        <div style={styles.cardsGrid}>
-          {sampleResults.map((product) => (
-            <ProductCard
-              id={product.id} 
-              key={product.id}
-              brand={product.brand}
-              name={product.name}
-              price={product.price}
-            />
-          ))}
+      {!loading && results.length > 0 && (
+        <div style={styles.cardsArea}>
+          <div style={styles.cardsGrid}>
+            {results.map((product, index) => (
+              <ProductCard key={index} product={product} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
@@ -128,145 +153,25 @@ export default function SearchResultsPage() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
-  page: {
-    background: "#ffffff",
-    minHeight: "100vh",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  topbar: {
-    display: "flex",
-    alignItems: "center",
-    padding: "0.85rem 2rem",
-    background: "#9CD5FF",
-    gap: "1rem",
-    position: "sticky",
-    top: 0,
-    zIndex: 10,
-  },
-  backBtn: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    border: "1px solid white",
-    background: "rgba(255,255,255,0.3)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    flexShrink: 0,
-  },
-  navBrand: {
-    fontFamily: "serif",
-    fontSize: "26px",
-    fontWeight: 700,
-    color: "#1A5F8A",
-    whiteSpace: "nowrap",
-    letterSpacing: "-0.5px",
-    flexShrink: 0,
-  },
-  searchWrap: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    background: "rgba(255,255,255,0.3)",
-    border: "1.5px solid rgba(255,255,255,0.6)",
-    borderRadius: "999px",
-    padding: "8px 16px",
-    gap: "8px",
-  },
-  searchInput: {
-    flex: 1,
-    border: "none",
-    background: "none",
-    outline: "none",
-    fontSize: "14px",
-    fontFamily: "'DM Sans', sans-serif",
-    color: "white",
-  },
-  iconBtn: {
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    border: "1px solid white",
-    background: "rgba(255,255,255,0.3)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    flexShrink: 0,
-  },
-  resultsBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "1rem 2rem 0.75rem",
-  },
-  resultsText: {
-    fontSize: "14px",
-    color: "#88bde0",
-  },
-  resultsQuery: {
-    color: "#1A5F8A",
-    fontWeight: 500,
-  },
-  sortBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    background: "white",
-    border: "1px solid #C8E8FF",
-    borderRadius: "8px",
-    padding: "7px 14px",
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: "13px",
-    color: "#3A99E8",
-    cursor: "pointer",
-  },
-  cardsArea: {
-    padding: "0.5rem 2rem 3rem",
-  },
-  cardsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "16px",
-  },
-  card: {
-    border: "1px solid #E8F4FF",
-    borderRadius: "14px",
-    overflow: "hidden",
-    cursor: "pointer",
-    background: "white",
-  },
-  cardImg: {
-    width: "100%",
-    aspectRatio: "1",
-    background: "#EEF7FF",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardInfo: {
-    padding: "10px 12px 14px",
-  },
-  cardBrand: {
-    fontSize: "11px",
-    color: "#88bde0",
-    marginBottom: "2px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  cardName: {
-    fontSize: "13px",
-    fontWeight: 500,
-    color: "#1A5F8A",
-    marginBottom: "6px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  cardPrice: {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "#3A99E8",
-  },
+  page: { background: "#ffffff", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" },
+  topbar: { display: "flex", alignItems: "center", padding: "0.85rem 2rem", background: "#9CD5FF", gap: "1rem", position: "sticky", top: 0, zIndex: 10 },
+  backBtn: { width: "34px", height: "34px", borderRadius: "50%", border: "1px solid white", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 },
+  navBrand: { fontFamily: "serif", fontSize: "26px", fontWeight: 700, color: "#1A5F8A", whiteSpace: "nowrap", letterSpacing: "-0.5px", flexShrink: 0 },
+  searchWrap: { flex: 1, display: "flex", alignItems: "center", background: "rgba(255,255,255,0.3)", border: "1.5px solid rgba(255,255,255,0.6)", borderRadius: "999px", padding: "8px 16px", gap: "8px" },
+  searchInput: { flex: 1, border: "none", background: "none", outline: "none", fontSize: "14px", fontFamily: "'DM Sans', sans-serif", color: "white" },
+  iconBtn: { width: "34px", height: "34px", borderRadius: "50%", border: "1px solid white", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 },
+  resultsBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 2rem 0.75rem" },
+  resultsText: { fontSize: "14px", color: "#88bde0" },
+  resultsQuery: { color: "#1A5F8A", fontWeight: 500 },
+  sortBtn: { display: "flex", alignItems: "center", gap: "6px", background: "white", border: "1px solid #C8E8FF", borderRadius: "8px", padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", color: "#3A99E8", cursor: "pointer" },
+  cardsArea: { padding: "0.5rem 2rem 3rem" },
+  cardsGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" },
+  card: { border: "1px solid #E8F4FF", borderRadius: "14px", overflow: "hidden", cursor: "pointer", background: "white" },
+  cardImg: { width: "100%", aspectRatio: "1", background: "#EEF7FF", display: "flex", alignItems: "center", justifyContent: "center" },
+  cardInfo: { padding: "10px 12px 14px" },
+  cardBrand: { fontSize: "11px", color: "#88bde0", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.5px" },
+  cardName: { fontSize: "13px", fontWeight: 500, color: "#1A5F8A", marginBottom: "6px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  cardPrice: { fontSize: "14px", fontWeight: 500, color: "#3A99E8" },
+  cardRating: { fontSize: "11px", color: "#88bde0", marginTop: "4px" },
+  centerMsg: { textAlign: "center", padding: "4rem", color: "#88bde0", fontSize: "15px" },
 };
