@@ -1,12 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function AuthPage({ onLogin }: { onLogin: () => void }) {
+export default function AuthPage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");  
 
   const handleSubmit = (e: React.FormEvent) => {
+  // replace onLogin() with:
+
     e.preventDefault();
     if (mode === "signup") {
     if (password !== confirmPassword) {
@@ -21,7 +25,7 @@ export default function AuthPage({ onLogin }: { onLogin: () => void }) {
     setConfirmPassword("");
     return;  // stop here, don't go to homepage
     }
-    onLogin();
+    navigate("/home");
     // TODO: connect to FastAPI backend
   };
 
