@@ -101,8 +101,9 @@ export default function AuthPage() {
 
         <div style={styles.divider}>or</div>
 
-        <button style={styles.btnGhost}>Continue as guest</button>
-
+        <button style={styles.btnGhost} onClick={() => navigate("/home")}>
+          Continue as guest
+        </button>
         <p style={styles.footer}>
           {mode === "login" ? (
             <>
