@@ -11,3 +11,10 @@ starlette==0.52.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.41.0
+
+python-multipart==0.0.9
+pillow==11.0.0
+requests==2.32.3
+numpy
+opencv-python==4.9.0.80
+python-dotenv==1.0.1
