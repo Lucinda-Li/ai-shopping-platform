@@ -1,27 +1,34 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { searchClothes } from "./api";
+import type { Product } from "./api";
 
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({ id, brand, name, price }: {
-  id: number;
-  brand: string;
-  name: string;
-  price: number;
-}) {
+function ProductCard({ product }: { product: Product }) {
   const navigate = useNavigate();
-
   return (
-    <div style={styles.card} onClick={() => navigate(`/product/${id}`)}>
-      <div style={styles.cardImg}>
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9CD5FF" strokeWidth="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 9h18M9 21V9" />
-        </svg>
-      </div>
+    <div style={styles.card} onClick={() => navigate(`/product/${product.id}`)}>
+      {product.image_url ? (
+        <img
+          src={product.image_url}
+          alt={product.title}
+          style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }}
+        />
+      ) : (
+        <div style={styles.cardImg}>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9CD5FF" strokeWidth="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+        </div>
+      )}
       <div style={styles.cardInfo}>
-        <div style={styles.cardBrand}>{brand}</div>
-        <div style={styles.cardName}>{name}</div>
-        <div style={styles.cardPrice}>${price.toFixed(2)}</div>
+        <div style={styles.cardBrand}>{product.store}</div>
+        <div style={styles.cardName}>{product.title}</div>
+        <div style={styles.cardPrice}>{product.price}</div>
+        {product.rating && (
+          <div style={styles.cardRating}>⭐ {product.rating} ({product.reviews})</div>
+        )}
       </div>
     </div>
   );
@@ -47,46 +54,59 @@ const defaultFilters: Filters = {
 // ── Search Results Page ───────────────────────────────────────────────────────
 export default function SearchResultsPage() {
   const navigate = useNavigate();
-  
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+
   const params = new URLSearchParams(window.location.search);
   const initialQuery = params.get("q") || "";
+
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [results, setResults] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState<Filters>({ ...defaultFilters });
   const [tempFilters, setTempFilters] = useState<Filters>({ ...defaultFilters });
 
+  // ── Fetch results whenever query or filters change ──
+  useEffect(() => {
+    if (!initialQuery.trim()) return;
+
+    const fetchResults = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await searchClothes({
+          query: initialQuery,
+          limit: 20,
+          // TODO: uncomment when backend supports filters
+          // gender: filters.gender,
+          // color: filters.color,
+          // priceRange: filters.priceRange,
+          // onSale: filters.onSale,
+          // grading: filters.grading,
+        });
+        setResults(data);
+      } catch (err) {
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResults();
+  }, [initialQuery, filters]);
+
   const openFilter = () => {
-    setTempFilters({ ...filters }); // reset temp to last saved
+    setTempFilters({ ...filters });
     setShowFilter(true);
   };
 
-  useEffect(() => {
-    if (initialQuery.trim()) {
-      setLoading(true);
-      fetch(`http://127.0.0.1:8000/search?q=${initialQuery}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setResults(data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setLoading(false);
-        });
-    }
-  }, [initialQuery, filters]);
-  
-  const closeFilter = () => setShowFilter(false); // close WITHOUT saving
+  const closeFilter = () => setShowFilter(false);
 
   const saveFilter = () => {
-    setFilters({ ...tempFilters }); // lock in the new filters
+    setFilters({ ...tempFilters });
     setShowFilter(false);
     console.log("Filters saved:", tempFilters);
-    // TODO: call FastAPI with filters + query
-    // fetch(`/search?q=${searchQuery}&gender=${tempFilters.gender}&...`)
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -99,7 +119,7 @@ export default function SearchResultsPage() {
 
       {/* Navbar */}
       <div style={styles.topbar}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+        <button style={styles.backBtn} onClick={() => navigate(-1)} title="Back">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -140,6 +160,7 @@ export default function SearchResultsPage() {
       <div style={styles.resultsBar}>
         <div style={styles.resultsText}>
           Showing results for <span style={styles.resultsQuery}>"{initialQuery}"</span>
+          {!loading && results.length > 0 && ` — ${results.length} items`}
         </div>
         <button style={styles.sortBtn}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3A99E8" strokeWidth="2">
@@ -149,39 +170,34 @@ export default function SearchResultsPage() {
         </button>
       </div>
 
-      {/* Cards grid */}
+      {/* Cards area */}
       <div style={styles.cardsArea}>
         {loading ? (
-          <p style={{ color: "#88bde0", textAlign: "center", padding: "2rem 0" }}>
-            Loading...
-          </p>
+          <div style={styles.centerMsg}>Searching for "{initialQuery}"...</div>
+        ) : error ? (
+          <div style={styles.centerMsg}>{error}</div>
         ) : results.length === 0 ? (
-          <p style={{ color: "#88bde0", textAlign: "center", padding: "2rem 0" }}>
-            No results found.
-          </p>
+          <div style={styles.centerMsg}>No results found for "{initialQuery}"</div>
         ) : (
           <div style={styles.cardsGrid}>
-            {results.map((product: { id: number; brand: string; name: string; price: number }) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                brand={product.brand}
-                name={product.name}
-                price={product.price}
-              />
+            {results.map((product, index) => (
+              <ProductCard key={index} product={product} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Overlay — click to close WITHOUT saving */}
+      {/* Overlay */}
       {showFilter && (
         <div style={styles.overlay} onClick={closeFilter} />
       )}
 
       {/* Filter panel */}
-      <div style={{ ...styles.filterPanel, right: showFilter ? 0 : "-320px", 
-        visibility: showFilter ? "visible" : "hidden"}}>
+      <div style={{
+        ...styles.filterPanel,
+        right: showFilter ? 0 : "-320px",
+        visibility: showFilter ? "visible" : "hidden",
+      }}>
         <div style={styles.filterHeader}>
           <span style={styles.filterTitle}>Filters</span>
           <button style={styles.closeBtn} onClick={closeFilter}>✕</button>
@@ -189,7 +205,6 @@ export default function SearchResultsPage() {
 
         {filterOptions.map(({ key, label, options }, i) => (
           <div key={key}>
-            {/* Divider before price section */}
             {i === 3 && <hr style={styles.filterDivider} />}
             <div style={styles.filterGroup}>
               <label style={styles.filterLabel}>{label}</label>
@@ -204,7 +219,6 @@ export default function SearchResultsPage() {
           </div>
         ))}
 
-        {/* Save button — saves and closes */}
         <button style={styles.saveBtn} onClick={saveFilter}>
           Save filters
         </button>
@@ -220,7 +234,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#ffffff",
     minHeight: "100vh",
     fontFamily: "'DM Sans', sans-serif",
-    overflowX: "hidden",  
+    overflowX: "hidden",
   },
   topbar: {
     display: "flex", alignItems: "center",
@@ -267,6 +281,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "'DM Sans', sans-serif", fontSize: "13px",
     color: "#3A99E8", cursor: "pointer",
   },
+  centerMsg: {
+    textAlign: "center", color: "#88bde0",
+    padding: "3rem 2rem", fontSize: "15px",
+  },
   cardsArea: { padding: "0.5rem 2rem 3rem" },
   cardsGrid: {
     display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px",
@@ -290,6 +308,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden", textOverflow: "ellipsis",
   },
   cardPrice: { fontSize: "14px", fontWeight: 500, color: "#3A99E8" },
+  cardRating: { fontSize: "11px", color: "#88bde0", marginTop: "4px" },
   overlay: {
     position: "fixed", inset: 0,
     background: "rgba(26,95,138,0.15)", zIndex: 20,

@@ -18,3 +18,4 @@ requests==2.32.3
 numpy
 opencv-python==4.9.0.80
 python-dotenv==1.0.1
+fal-client
