@@ -1,0 +1,37 @@
+/* Design system: primary palette & components (ShopAI-style minimal) */
+:root {
+  /* Brand colors */
+  --color-primary: #9cd5ff;
+  --color-primary-hover: #8bc4ee;
+  --color-light-blue: #c8e8ff;
+  --color-bg: #f8fafc;
+  --color-deep-blue: #3a99e8;
+  --color-navy: #1a5f8a;
+  --color-white: #ffffff;
+  --color-wishlist: #ff6b8a;
+
+  /* Semantic — softer for minimal vibe */
+  --color-text: #334155;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-card-bg: #ffffff;
+  --color-error: #b91c1c;
+
+  /* Buttons */
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-text: var(--color-white);
+  --btn-cta-bg: var(--color-deep-blue);
+  --btn-cta-text: var(--color-white);
+  --btn-secondary-border: var(--color-primary);
+  --btn-secondary-text: var(--color-primary);
+  --btn-filter-bg: var(--color-light-blue);
+  --btn-filter-text: var(--color-navy);
+  --btn-wishlist-bg: var(--color-wishlist);
+  --btn-wishlist-text: var(--color-white);
+
+  /* Typography — single font, use weight for emphasis */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
