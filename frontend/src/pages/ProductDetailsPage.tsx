@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 import './ProductDetailsPage.css'
 import { CustomerReviewCard } from '../components/CustomerReviewCard'
 import type { Product, Review } from '../types/product'
@@ -41,13 +41,32 @@ const MOCK_REVIEWS: Review[] = [
   },
 ]
 
+/** 从路由 state 或 mock 得到当前商品，保证必填字段有默认值 */
+function resolveProduct(stateProduct: Product | null | undefined): Product {
+  const base = stateProduct ?? MOCK_PRODUCT
+  return {
+    ...base,
+    id: base.id ?? MOCK_PRODUCT.id,
+    name: base.name ?? MOCK_PRODUCT.name,
+    brand: base.brand ?? MOCK_PRODUCT.brand,
+    price: base.price ?? MOCK_PRODUCT.price,
+    imageUrls: base.imageUrls?.length ? base.imageUrls : (base.imageUrl ? [base.imageUrl] : MOCK_PRODUCT.imageUrls),
+    officialUrl: base.officialUrl ?? MOCK_PRODUCT.officialUrl,
+    sizes: base.sizes?.length ? base.sizes : MOCK_PRODUCT.sizes,
+    foundOn: base.foundOn?.length ? base.foundOn : MOCK_PRODUCT.foundOn,
+    aiSummary: base.aiSummary ?? MOCK_PRODUCT.aiSummary,
+  }
+}
+
 export function ProductDetailsPage() {
   const { productId } = useParams<{ productId: string }>()
-  const [selectedSize, setSelectedSize] = useState<string>(MOCK_PRODUCT.sizes[0] ?? '')
+  const location = useLocation()
+  const stateProduct = (location.state as { product?: Product } | null)?.product
+  const product = resolveProduct(stateProduct)
+  const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0] ?? '')
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
-  const product = MOCK_PRODUCT
   const reviews = MOCK_REVIEWS
   const images = product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : [])
   const mainImage = images[selectedImageIndex] ?? images[0]
@@ -59,7 +78,7 @@ export function ProductDetailsPage() {
   return (
     <div className="page product-details-page">
       <header className="product-details-header">
-        <Link to="/" className="product-details-header__back" aria-label="Back to search">
+        <Link to="/search" className="product-details-header__back" aria-label="Back to search results">
           ← Back
         </Link>
       </header>

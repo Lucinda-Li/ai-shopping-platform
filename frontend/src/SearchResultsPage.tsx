@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { Product } from "./types/product";
 
 // Sample results — replace with real data from FastAPI later
 const sampleResults = [
@@ -13,17 +14,27 @@ const sampleResults = [
   { id: 8, brand: "Jordan", name: "Air Jordan 1", price: 180.0 },
 ];
 
-// ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({id, brand, name, price }: {
-  id: number;
-  brand: string;
-  name: string;
-  price: number;
-}) {
+/** 把搜索结果项转成详情页需要的 Product，便于点击卡片后带过去 */
+function toProduct(item: (typeof sampleResults)[0]): Product {
+  return {
+    id: String(item.id),
+    name: item.name,
+    brand: item.brand,
+    price: `$${item.price.toFixed(2)}`,
+    imageUrls: [`https://placehold.co/320x400/f0f8ff/1a5f8a?text=${encodeURIComponent(item.name)}`],
+    officialUrl: "https://example.com",
+    sizes: ["XS", "S", "M", "L", "XL"],
+    foundOn: ["Brand site"],
+    aiSummary: undefined,
+  };
+}
 
+// ── Product Card ──────────────────────────────────────────────────────────────
+function ProductCard({ product }: { product: (typeof sampleResults)[0] }) {
   const navigate = useNavigate();
+  const { id, brand, name, price } = product;
   return (
-    <div style={styles.card} onClick={() => navigate(`/product/${id}`)}>
+    <div style={styles.card} onClick={() => navigate(`/product/${id}`, { state: { product: toProduct(product) } })}>
       {/* Image placeholder — replace with <img src={imageUrl} /> when backend is ready */}
       <div style={styles.cardImg}>
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#9CD5FF" strokeWidth="1.2">
@@ -61,8 +72,8 @@ export default function SearchResultsPage() {
 
       {/* Navbar */}
       <div style={styles.topbar}>
-        {/* Back button */}
-        <button style={styles.backBtn} onClick={() => navigate(-1)} title="Back">
+        {/* Back button — 回到上一页（首页） */}
+        <button style={styles.backBtn} onClick={() => navigate("/home")} title="Back">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -110,14 +121,8 @@ export default function SearchResultsPage() {
       {/* Cards grid */}
       <div style={styles.cardsArea}>
         <div style={styles.cardsGrid}>
-          {sampleResults.map((product) => (
-            <ProductCard
-              id={product.id} 
-              key={product.id}
-              brand={product.brand}
-              name={product.name}
-              price={product.price}
-            />
+          {sampleResults.map((item) => (
+            <ProductCard key={item.id} product={item} />
           ))}
         </div>
       </div>
