@@ -62,13 +62,14 @@ async def search_clothes(filters: SearchFilters) -> list:
         if filters.max_price and price and price > filters.max_price:
             continue
 
-        # Pick out only the fields your frontend needs
+        # SerpApi 有时用 link，有时用 product_link，优先用 link
+        product_link = item.get("link") or item.get("product_link") or ""
         results.append({
             "title":     item.get("title"),       # Product name
             "price":     item.get("price"),       # Price as a string e.g. "$49.99"
             "store":     item.get("source"),      # Store name e.g. "nordstrom.com"
             "image_url": item.get("thumbnail"),   # Product image URL
-            "link":      item.get("link"),        # Link to buy the product
+            "link":      product_link,            # Link to buy the product
             "rating":    item.get("rating"),      # Star rating e.g. 4.5
             "reviews":   item.get("reviews"),     # Number of reviews
         })
