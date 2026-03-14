@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # 新增
+from app.routes import tryon                 # 新增                                   
 from dotenv import load_dotenv
 import os
 
@@ -21,6 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+if not os.path.exists("outputs"):
+    os.makedirs("outputs")                                       # 新增
+app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")      # 新增
+
+app.include_router(tryon.router)             # 新增
 app.include_router(router, prefix="/api")
 
 @app.get("/")
