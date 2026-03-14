@@ -7,6 +7,17 @@ interface LocationState {
   product?: Product & { selectedSize?: string }
 }
 
+const BACKEND_BASE_URL = 'http://localhost:8000'
+
+interface TryOnResponse {
+  status: string
+  images: {
+    front: string
+  }
+  recommended_size: string
+  bmi: number
+}
+
 export function AiTryOnPage() {
   const location = useLocation()
   const state = location.state as LocationState | null
@@ -20,8 +31,30 @@ export function AiTryOnPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [recommendedSize, setRecommendedSize] = useState<string | null>(null)
+  const [bmi, setBmi] = useState<number | null>(null)
 
   const sizes = product?.sizes ?? ['S', 'M', 'L']
+
+  const getClothImageUrl = () => {
+    if (!product) return null
+    if (Array.isArray((product as Product).imageUrls) && product.imageUrls.length > 0) {
+      return product.imageUrls[0]
+    }
+    if (product.imageUrl) {
+      return product.imageUrl
+    }
+    return null
+  }
+
+  const fetchImageAsFile = async (url: string, filename: string) => {
+    const res = await fetch(url)
+    if (!res.ok) {
+      throw new Error('Failed to fetch cloth image')
+    }
+    const blob = await res.blob()
+    return new File([blob], filename, { type: blob.type || 'image/png' })
+  }
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -38,16 +71,48 @@ export function AiTryOnPage() {
       setError('Please upload a photo and fill in height, weight, and size.')
       return
     }
+
+    const clothUrl = getClothImageUrl()
+    if (!clothUrl) {
+      setError('No product image available for try-on.')
+      return
+    }
+
     setError(null)
     setIsLoading(true)
     try {
-      // TODO: call real API; for now simulate failure sometimes for demo
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      const shouldFail = false // set true to test error state
-      if (shouldFail) {
-        throw new Error('Service temporarily unavailable')
+      const clothFile = await fetchImageAsFile(clothUrl, 'cloth.png')
+
+      const formData = new FormData()
+      formData.append('user_image', photoFile)
+      formData.append('cloth_image', clothFile)
+      formData.append('height', String(parseFloat(height)))
+      formData.append('weight', String(parseFloat(weight)))
+      formData.append('size', size)
+
+      const response = await fetch(`${BACKEND_BASE_URL}/tryon`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`)
       }
-      setPreviewImageUrl('https://placehold.co/400x500/c8e8ff/1a5f8a?text=Try-on+Preview')
+
+      const data = (await response.json()) as TryOnResponse
+      const frontPath = data.images?.front
+      if (!frontPath) {
+        throw new Error('No image returned from try-on service')
+      }
+
+      const fullUrl =
+        frontPath.startsWith('http://') || frontPath.startsWith('https://')
+          ? frontPath
+          : `${BACKEND_BASE_URL}${frontPath}`
+
+      setPreviewImageUrl(fullUrl)
+      setRecommendedSize(data.recommended_size)
+      setBmi(data.bmi)
     } catch {
       setError('We couldn\'t generate a preview right now. Please try again later.')
       // Keep user photo and inputs; do not clear
@@ -124,11 +189,20 @@ export function AiTryOnPage() {
                   {error}
                 </div>
               ) : previewImageUrl ? (
-                <img
-                  src={previewImageUrl}
-                  alt="AI try-on result"
-                  className="ai-tryon-panel__result-img"
-                />
+                <>
+                  <img
+                    src={previewImageUrl}
+                    alt="AI try-on result"
+                    className="ai-tryon-panel__result-img"
+                  />
+                  {(recommendedSize || bmi) && (
+                    <p className="ai-tryon-panel__meta">
+                      {recommendedSize && <span>Recommended size: {recommendedSize}</span>}
+                      {recommendedSize && bmi && <span> · </span>}
+                      {bmi && <span>BMI: {bmi}</span>}
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="ai-tryon-panel__placeholder">
                   Your AI try-on will appear here
