@@ -1,13 +1,35 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchClothes } from "./api";
-import type { Product } from "./api";
+import type { Product as ApiProduct } from "./api";
+import type { Product as DetailProduct } from "./types/product";
+
+/** 把搜索 API 返回的一条结果转成详情页需要的 Product（用于点击进详情 + AI 试穿） */
+function toDetailProduct(apiProduct: ApiProduct, id: string): DetailProduct {
+  return {
+    id,
+    name: apiProduct.title,
+    brand: apiProduct.store,
+    price: apiProduct.price,
+    imageUrls: apiProduct.image_url ? [apiProduct.image_url] : [],
+    officialUrl: apiProduct.link,
+    sizes: ["XS", "S", "M", "L", "XL"],
+    foundOn: [apiProduct.store],
+    aiSummary: undefined,
+  };
+}
 
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({ product }: { product: Product }) {
-  const navigate = useNavigate();
+function ProductCard({
+  product,
+  onClick,
+}: {
+  product: ApiProduct;
+  onClick: () => void;
+}) {
   return (
-    <div style={styles.card} onClick={() => navigate(`/product/${product.id}`)}>
+    <div style={styles.card} onClick={onClick}>
+      {/* Real product image from backend */}
       {product.image_url ? (
         <img
           src={product.image_url}
@@ -59,7 +81,7 @@ export default function SearchResultsPage() {
   const initialQuery = params.get("q") || "";
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [results, setResults] = useState<Product[]>([]);
+  const [results, setResults] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -119,7 +141,7 @@ export default function SearchResultsPage() {
 
       {/* Navbar */}
       <div style={styles.topbar}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)} title="Back">
+        <button style={styles.backBtn} onClick={() => navigate("/home")} title="Back to home">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
@@ -180,9 +202,21 @@ export default function SearchResultsPage() {
           <div style={styles.centerMsg}>No results found for "{initialQuery}"</div>
         ) : (
           <div style={styles.cardsGrid}>
-            {results.map((product, index) => (
-              <ProductCard key={index} product={product} />
-            ))}
+            {results.map((product, index) => {
+              const id = String(index);
+              const detailProduct = toDetailProduct(product, id);
+              return (
+                <ProductCard
+                  key={id}
+                  product={product}
+                  onClick={() =>
+                    navigate(`/product/${id}`, {
+                      state: { product: detailProduct, searchQuery: initialQuery },
+                    })
+                  }
+                />
+              );
+            })}
           </div>
         )}
       </div>

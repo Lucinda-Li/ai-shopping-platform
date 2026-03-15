@@ -35,16 +35,31 @@ def image_to_base64(path: str) -> str:
         return "data:image/png;base64," + base64.b64encode(f.read()).decode()
 
 
-async def generate_tryon(user_image, cloth_image, height: float, weight: float, size: str):
-
-    # 1. 保存图片
+async def generate_tryon(
+    user_image,
+    cloth_image=None,
+    cloth_image_url: str | None = None,
+    height: float = 0,
+    weight: float = 0,
+    size: str = "",
+):
+    # 1. 保存图片（用户上传的图 + 衣服图：文件上传或通过 URL 由服务端下载，避免前端 CORS）
     user_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_user.png")
     cloth_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_cloth.png")
 
     with open(user_path, "wb") as f:
         f.write(await user_image.read())
-    with open(cloth_path, "wb") as f:
-        f.write(await cloth_image.read())
+
+    if cloth_image is not None:
+        with open(cloth_path, "wb") as f:
+            f.write(await cloth_image.read())
+    elif cloth_image_url:
+        resp = requests.get(cloth_image_url, timeout=15)
+        resp.raise_for_status()
+        with open(cloth_path, "wb") as f:
+            f.write(resp.content)
+    else:
+        raise ValueError("Provide either cloth_image or cloth_image_url")
 
     # 2. 调用 fal.ai 试穿模型
     result = fal_client.run(

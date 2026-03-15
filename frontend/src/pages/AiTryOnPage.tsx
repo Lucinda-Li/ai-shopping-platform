@@ -47,15 +47,6 @@ export function AiTryOnPage() {
     return null
   }
 
-  const fetchImageAsFile = async (url: string, filename: string) => {
-    const res = await fetch(url)
-    if (!res.ok) {
-      throw new Error('Failed to fetch cloth image')
-    }
-    const blob = await res.blob()
-    return new File([blob], filename, { type: blob.type || 'image/png' })
-  }
-
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -81,11 +72,9 @@ export function AiTryOnPage() {
     setError(null)
     setIsLoading(true)
     try {
-      const clothFile = await fetchImageAsFile(clothUrl, 'cloth.png')
-
       const formData = new FormData()
       formData.append('user_image', photoFile)
-      formData.append('cloth_image', clothFile)
+      formData.append('cloth_image_url', clothUrl)
       formData.append('height', String(parseFloat(height)))
       formData.append('weight', String(parseFloat(weight)))
       formData.append('size', size)
@@ -95,11 +84,11 @@ export function AiTryOnPage() {
         body: formData,
       })
 
+      const data = (await response.json().catch(() => ({}))) as TryOnResponse & { detail?: string }
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`)
+        const msg = typeof data?.detail === 'string' ? data.detail : `Request failed (${response.status})`
+        throw new Error(msg)
       }
-
-      const data = (await response.json()) as TryOnResponse
       const frontPath = data.images?.front
       if (!frontPath) {
         throw new Error('No image returned from try-on service')
@@ -113,8 +102,8 @@ export function AiTryOnPage() {
       setPreviewImageUrl(fullUrl)
       setRecommendedSize(data.recommended_size)
       setBmi(data.bmi)
-    } catch {
-      setError('We couldn\'t generate a preview right now. Please try again later.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'We couldn\'t generate a preview right now. Please try again later.')
       // Keep user photo and inputs; do not clear
     } finally {
       setIsLoading(false)

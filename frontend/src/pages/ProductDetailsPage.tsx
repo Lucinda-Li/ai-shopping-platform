@@ -41,9 +41,11 @@ const MOCK_REVIEWS: Review[] = [
   },
 ]
 
-/** 从路由 state 或 mock 得到当前商品，保证必填字段有默认值 */
+/** 从路由 state 或 mock 得到当前商品，保证必填字段有默认值。
+ * 有 state 时 officialUrl 一律用 state 的（来自搜索 API 的 link），避免误用 mock 的 North Face 链接。 */
 function resolveProduct(stateProduct: Product | null | undefined): Product {
   const base = stateProduct ?? MOCK_PRODUCT
+  const hasState = stateProduct != null
   return {
     ...base,
     id: base.id ?? MOCK_PRODUCT.id,
@@ -51,7 +53,7 @@ function resolveProduct(stateProduct: Product | null | undefined): Product {
     brand: base.brand ?? MOCK_PRODUCT.brand,
     price: base.price ?? MOCK_PRODUCT.price,
     imageUrls: base.imageUrls?.length ? base.imageUrls : (base.imageUrl ? [base.imageUrl] : MOCK_PRODUCT.imageUrls),
-    officialUrl: base.officialUrl ?? MOCK_PRODUCT.officialUrl,
+    officialUrl: hasState ? (stateProduct!.officialUrl ?? '') : (base.officialUrl ?? MOCK_PRODUCT.officialUrl),
     sizes: base.sizes?.length ? base.sizes : MOCK_PRODUCT.sizes,
     foundOn: base.foundOn?.length ? base.foundOn : MOCK_PRODUCT.foundOn,
     aiSummary: base.aiSummary ?? MOCK_PRODUCT.aiSummary,
@@ -61,8 +63,10 @@ function resolveProduct(stateProduct: Product | null | undefined): Product {
 export function ProductDetailsPage() {
   const { productId } = useParams<{ productId: string }>()
   const location = useLocation()
-  const stateProduct = (location.state as { product?: Product } | null)?.product
+  const stateProduct = (location.state as { product?: Product; searchQuery?: string } | null)?.product
+  const searchQuery = (location.state as { searchQuery?: string } | null)?.searchQuery ?? ''
   const product = resolveProduct(stateProduct)
+  const backToSearchUrl = searchQuery ? `/search?q=${encodeURIComponent(searchQuery)}` : '/search'
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0] ?? '')
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -78,7 +82,7 @@ export function ProductDetailsPage() {
   return (
     <div className="page product-details-page">
       <header className="product-details-header">
-        <Link to="/search" className="product-details-header__back" aria-label="Back to search results">
+        <Link to={backToSearchUrl} className="product-details-header__back" aria-label="Back to search results">
           ← Back
         </Link>
       </header>
@@ -148,15 +152,27 @@ export function ProductDetailsPage() {
           </div>
 
           <div className="product-details-main__actions">
-            <a
-              href={product.officialUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn--cta"
-            >
-              Go to official website
-            </a>
-            <p className="product-details-main__hint">Opens in a new tab</p>
+            {/* 有有效原网址时新标签页打开；无链接时仅展示按钮不跳转，避免打开当前页造成“奇怪”体验 */}
+            {product.officialUrl && product.officialUrl.startsWith('http') ? (
+              <>
+                <a
+                  href={product.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn--cta"
+                >
+                  Go to official website
+                </a>
+                <p className="product-details-main__hint">Opens in a new tab</p>
+              </>
+            ) : (
+              <>
+                <span className="btn btn--cta" style={{ cursor: 'not-allowed', opacity: 0.8 }} title="此商品暂无官网链接">
+                  Go to official website
+                </span>
+                <p className="product-details-main__hint">此商品暂无官网链接（搜索来源未返回链接）</p>
+              </>
+            )}
             <Link
               to="/ai-tryon"
               state={{ product: { ...product, selectedSize } }}
