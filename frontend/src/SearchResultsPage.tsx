@@ -56,6 +56,23 @@ function ProductCard({
   );
 }
 
+// ── Filter options ────────────────────────────────────────────────────────────
+const filterOptions = [
+  { key: "gender",     label: "Gender",      options: ["All", "Men", "Women", "Unisex"] },
+  { key: "color",      label: "Color",       options: ["All", "Black", "White", "Blue", "Red", "Green", "Yellow"] },
+  { key: "age",        label: "Age group",   options: ["All", "Adult", "Kids", "Teen"] },
+  { key: "priceRange", label: "Price range", options: ["All", "Under $50", "$50–$100", "$100–$200", "$200+"] },
+  { key: "onSale",     label: "On sale",     options: ["All", "On sale only"] },
+  { key: "grading",    label: "Grading",     options: ["All", "★★★★★", "★★★★☆", "★★★☆☆", "★★☆☆☆", "★☆☆☆☆"] },
+];
+
+type Filters = Record<string, string>;
+
+const defaultFilters: Filters = {
+  gender: "All", color: "All", age: "All",
+  priceRange: "All", onSale: "All", grading: "All",
+};
+
 // ── Search Results Page ───────────────────────────────────────────────────────
 export default function SearchResultsPage() {
   const navigate = useNavigate();
@@ -68,7 +85,11 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ── Fetch results whenever the URL query changes ──
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState<Filters>({ ...defaultFilters });
+  const [tempFilters, setTempFilters] = useState<Filters>({ ...defaultFilters });
+
+  // ── Fetch results whenever query or filters change ──
   useEffect(() => {
     if (!initialQuery.trim()) return;
 
@@ -76,7 +97,16 @@ export default function SearchResultsPage() {
       setLoading(true);
       setError("");
       try {
-        const data = await searchClothes({ query: initialQuery, limit: 20 });
+        const data = await searchClothes({
+          query: initialQuery,
+          limit: 20,
+          // TODO: uncomment when backend supports filters
+          // gender: filters.gender,
+          // color: filters.color,
+          // priceRange: filters.priceRange,
+          // onSale: filters.onSale,
+          // grading: filters.grading,
+        });
         setResults(data);
       } catch (err) {
         setError("Something went wrong. Please try again.");
@@ -86,13 +116,24 @@ export default function SearchResultsPage() {
     };
 
     fetchResults();
-  }, [initialQuery]); // re-runs every time the query in the URL changes
+  }, [initialQuery, filters]);
+
+  const openFilter = () => {
+    setTempFilters({ ...filters });
+    setShowFilter(true);
+  };
+
+  const closeFilter = () => setShowFilter(false);
+
+  const saveFilter = () => {
+    setFilters({ ...tempFilters });
+    setShowFilter(false);
+    console.log("Filters saved:", tempFilters);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${searchQuery}`);
-    }
+    if (searchQuery.trim()) navigate(`/search?q=${searchQuery}`);
   };
 
   return (
@@ -122,14 +163,22 @@ export default function SearchResultsPage() {
           />
         </form>
 
+        {/* Filter button */}
+        <button style={styles.iconBtn} onClick={openFilter} title="Filters">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <path d="M3 6h18M6 12h12M9 18h6" />
+          </svg>
+        </button>
+
+        {/* Wishlist */}
         <button style={styles.iconBtn} title="Wishlist">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" stroke="#FF6B8A" strokeWidth="1.5">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B8A" stroke="#FF6B8A" strokeWidth="1.5">
             <path d="M12 21C12 21 3 14 3 8.5A5.5 5.5 0 0 1 12 5.5 5.5 5.5 0 0 1 21 8.5C21 14 12 21 12 21Z" />
           </svg>
         </button>
       </div>
 
-      {/* Results count bar */}
+      {/* Results bar */}
       <div style={styles.resultsBar}>
         <div style={styles.resultsText}>
           Showing results for <span style={styles.resultsQuery}>"{initialQuery}"</span>
@@ -143,24 +192,15 @@ export default function SearchResultsPage() {
         </button>
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div style={styles.centerMsg}>Searching for "{initialQuery}"...</div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div style={styles.centerMsg}>{error}</div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !error && results.length === 0 && (
-        <div style={styles.centerMsg}>No results found for "{initialQuery}"</div>
-      )}
-
-      {/* Cards grid */}
-      {!loading && results.length > 0 && (
-        <div style={styles.cardsArea}>
+      {/* Cards area */}
+      <div style={styles.cardsArea}>
+        {loading ? (
+          <div style={styles.centerMsg}>Searching for "{initialQuery}"...</div>
+        ) : error ? (
+          <div style={styles.centerMsg}>{error}</div>
+        ) : results.length === 0 ? (
+          <div style={styles.centerMsg}>No results found for "{initialQuery}"</div>
+        ) : (
           <div style={styles.cardsGrid}>
             {results.map((product, index) => {
               const id = String(index);
@@ -178,8 +218,45 @@ export default function SearchResultsPage() {
               );
             })}
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Overlay */}
+      {showFilter && (
+        <div style={styles.overlay} onClick={closeFilter} />
       )}
+
+      {/* Filter panel */}
+      <div style={{
+        ...styles.filterPanel,
+        right: showFilter ? 0 : "-320px",
+        visibility: showFilter ? "visible" : "hidden",
+      }}>
+        <div style={styles.filterHeader}>
+          <span style={styles.filterTitle}>Filters</span>
+          <button style={styles.closeBtn} onClick={closeFilter}>✕</button>
+        </div>
+
+        {filterOptions.map(({ key, label, options }, i) => (
+          <div key={key}>
+            {i === 3 && <hr style={styles.filterDivider} />}
+            <div style={styles.filterGroup}>
+              <label style={styles.filterLabel}>{label}</label>
+              <select
+                style={styles.filterSelect}
+                value={tempFilters[key]}
+                onChange={(e) => setTempFilters({ ...tempFilters, [key]: e.target.value })}
+              >
+                {options.map((o) => <option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+        ))}
+
+        <button style={styles.saveBtn} onClick={saveFilter}>
+          Save filters
+        </button>
+      </div>
 
     </div>
   );
@@ -187,25 +264,129 @@ export default function SearchResultsPage() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles: Record<string, React.CSSProperties> = {
-  page: { background: "#ffffff", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif" },
-  topbar: { display: "flex", alignItems: "center", padding: "0.85rem 2rem", background: "#9CD5FF", gap: "1rem", position: "sticky", top: 0, zIndex: 10 },
-  backBtn: { width: "34px", height: "34px", borderRadius: "50%", border: "1px solid white", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 },
-  navBrand: { fontFamily: "serif", fontSize: "26px", fontWeight: 700, color: "#1A5F8A", whiteSpace: "nowrap", letterSpacing: "-0.5px", flexShrink: 0 },
-  searchWrap: { flex: 1, display: "flex", alignItems: "center", background: "rgba(255,255,255,0.3)", border: "1.5px solid rgba(255,255,255,0.6)", borderRadius: "999px", padding: "8px 16px", gap: "8px" },
-  searchInput: { flex: 1, border: "none", background: "none", outline: "none", fontSize: "14px", fontFamily: "'DM Sans', sans-serif", color: "white" },
-  iconBtn: { width: "34px", height: "34px", borderRadius: "50%", border: "1px solid white", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 },
-  resultsBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 2rem 0.75rem" },
+  page: {
+    background: "#ffffff",
+    minHeight: "100vh",
+    fontFamily: "'DM Sans', sans-serif",
+    overflowX: "hidden",
+  },
+  topbar: {
+    display: "flex", alignItems: "center",
+    padding: "0.85rem 2rem", background: "#9CD5FF",
+    gap: "1rem", position: "sticky", top: 0, zIndex: 10,
+  },
+  backBtn: {
+    width: "34px", height: "34px", borderRadius: "50%",
+    border: "1px solid white", background: "rgba(255,255,255,0.3)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", flexShrink: 0,
+  },
+  navBrand: {
+    fontFamily: "serif", fontSize: "26px", fontWeight: 700,
+    color: "#1A5F8A", whiteSpace: "nowrap",
+    letterSpacing: "-0.5px", flexShrink: 0,
+  },
+  searchWrap: {
+    flex: 1, display: "flex", alignItems: "center",
+    background: "rgba(255,255,255,0.3)",
+    border: "1.5px solid rgba(255,255,255,0.6)",
+    borderRadius: "999px", padding: "8px 16px", gap: "8px",
+  },
+  searchInput: {
+    flex: 1, border: "none", background: "none", outline: "none",
+    fontSize: "14px", fontFamily: "'DM Sans', sans-serif", color: "white",
+  },
+  iconBtn: {
+    width: "34px", height: "34px", borderRadius: "50%",
+    border: "1px solid white", background: "rgba(255,255,255,0.3)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", flexShrink: 0,
+  },
+  resultsBar: {
+    display: "flex", justifyContent: "space-between",
+    alignItems: "center", padding: "1rem 2rem 0.75rem",
+  },
   resultsText: { fontSize: "14px", color: "#88bde0" },
   resultsQuery: { color: "#1A5F8A", fontWeight: 500 },
-  sortBtn: { display: "flex", alignItems: "center", gap: "6px", background: "white", border: "1px solid #C8E8FF", borderRadius: "8px", padding: "7px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", color: "#3A99E8", cursor: "pointer" },
+  sortBtn: {
+    display: "flex", alignItems: "center", gap: "6px",
+    background: "white", border: "1px solid #C8E8FF",
+    borderRadius: "8px", padding: "7px 14px",
+    fontFamily: "'DM Sans', sans-serif", fontSize: "13px",
+    color: "#3A99E8", cursor: "pointer",
+  },
+  centerMsg: {
+    textAlign: "center", color: "#88bde0",
+    padding: "3rem 2rem", fontSize: "15px",
+  },
   cardsArea: { padding: "0.5rem 2rem 3rem" },
-  cardsGrid: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" },
-  card: { border: "1px solid #E8F4FF", borderRadius: "14px", overflow: "hidden", cursor: "pointer", background: "white" },
-  cardImg: { width: "100%", aspectRatio: "1", background: "#EEF7FF", display: "flex", alignItems: "center", justifyContent: "center" },
+  cardsGrid: {
+    display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px",
+  },
+  card: {
+    border: "1px solid #E8F4FF", borderRadius: "14px",
+    overflow: "hidden", cursor: "pointer", background: "white",
+  },
+  cardImg: {
+    width: "100%", aspectRatio: "1", background: "#EEF7FF",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
   cardInfo: { padding: "10px 12px 14px" },
-  cardBrand: { fontSize: "11px", color: "#88bde0", marginBottom: "2px", textTransform: "uppercase", letterSpacing: "0.5px" },
-  cardName: { fontSize: "13px", fontWeight: 500, color: "#1A5F8A", marginBottom: "6px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  cardBrand: {
+    fontSize: "11px", color: "#88bde0", marginBottom: "2px",
+    textTransform: "uppercase", letterSpacing: "0.5px",
+  },
+  cardName: {
+    fontSize: "13px", fontWeight: 500, color: "#1A5F8A",
+    marginBottom: "6px", whiteSpace: "nowrap",
+    overflow: "hidden", textOverflow: "ellipsis",
+  },
   cardPrice: { fontSize: "14px", fontWeight: 500, color: "#3A99E8" },
   cardRating: { fontSize: "11px", color: "#88bde0", marginTop: "4px" },
-  centerMsg: { textAlign: "center", padding: "4rem", color: "#88bde0", fontSize: "15px" },
+  overlay: {
+    position: "fixed", inset: 0,
+    background: "rgba(26,95,138,0.15)", zIndex: 20,
+  },
+  filterPanel: {
+    position: "fixed", top: 0,
+    width: "300px", height: "100vh",
+    background: "white", borderLeft: "2px solid #9CD5FF",
+    zIndex: 30, transition: "right 0.3s ease",
+    padding: "1.5rem", overflowY: "auto",
+  },
+  filterHeader: {
+    display: "flex", justifyContent: "space-between",
+    alignItems: "center", marginBottom: "1.5rem",
+    paddingBottom: "1rem", borderBottom: "1.5px solid #E8F4FF",
+  },
+  filterTitle: {
+    fontSize: "18px", fontWeight: 500,
+    color: "#1A5F8A", fontFamily: "serif",
+  },
+  closeBtn: {
+    width: "30px", height: "30px", borderRadius: "50%",
+    border: "1px solid #C8E8FF", background: "#EEF7FF",
+    color: "#3A99E8", cursor: "pointer", fontSize: "14px",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  filterDivider: {
+    border: "none", borderTop: "1px solid #E8F4FF", margin: "0.5rem 0",
+  },
+  filterGroup: { marginBottom: "1.1rem" },
+  filterLabel: {
+    display: "block", fontSize: "12px", fontWeight: 500,
+    color: "#3A99E8", marginBottom: "5px", letterSpacing: "0.3px",
+  },
+  filterSelect: {
+    width: "100%", border: "1px solid #C8E8FF",
+    borderRadius: "8px", padding: "9px 12px",
+    fontSize: "13px", color: "#1A5F8A",
+    fontFamily: "'DM Sans', sans-serif", outline: "none", background: "#FAFCFF",
+  },
+  saveBtn: {
+    width: "100%", background: "#9CD5FF", color: "#1A5F8A",
+    border: "none", borderRadius: "10px", padding: "12px",
+    fontSize: "15px", fontWeight: 500, cursor: "pointer",
+    fontFamily: "'DM Sans', sans-serif", marginTop: "0.5rem",
+  },
 };
