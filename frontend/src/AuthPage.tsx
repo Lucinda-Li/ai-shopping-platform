@@ -6,37 +6,32 @@ export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");  
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-  // replace onLogin() with:
-
     e.preventDefault();
     if (mode === "signup") {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+      alert("Account created successfully!");
+      setMode("login");
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
       return;
     }
-    alert("Account created successfully!");
-    setMode("login");
-    console.log({ mode, username, password });
-    setUsername("");
-    setPassword("");
-    setConfirmPassword("");
-    return;  // stop here, don't go to homepage
-    }
     navigate("/home");
-    // TODO: connect to FastAPI backend
   };
-
 
   return (
     <div style={styles.root}>
       <div style={styles.card}>
 
         {/* Brand */}
-        <h1 style={styles.brand}>ShopAI.</h1>
-        <p style={styles.tagline}>Find your style, powered by AI</p>
+        <h1 style={styles.brand}>AuraFit.</h1>
+        <p style={styles.tagline}>Take a trip. Find your fit.</p>
 
         {/* Tabs */}
         <div style={styles.tabRow}>
@@ -104,6 +99,7 @@ export default function AuthPage() {
         <button style={styles.btnGhost} onClick={() => navigate("/home")}>
           Continue as guest
         </button>
+
         <p style={styles.footer}>
           {mode === "login" ? (
             <>
@@ -147,42 +143,46 @@ const styles: Record<string, React.CSSProperties> = {
   brand: {
     fontFamily: "serif",
     fontSize: "56px",
-    color: "#1A5F8A",
     letterSpacing: "-1px",
     lineHeight: "1",
     marginBottom: "10px",
     fontWeight: 400,
+    background: "linear-gradient(135deg, #D78FEE, #5BC8C8)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
   },
   tagline: {
-    fontSize: "16px",
-    color: "#3A99E8",
-    fontWeight: 400,
+    fontSize: "28px",
+    color: "#C9A0DC",
+    fontWeight: 300,
+    fontStyle: "italic",
+    fontFamily: "'Cormorant Garamond', serif",
     marginBottom: "2.5rem",
-    letterSpacing: "0.2px",
+    letterSpacing: "0.5px",
   },
   tabRow: {
     display: "flex",
     width: "100%",
-    borderBottom: "1.5px solid #E8F4FF",
+    borderBottom: "1.5px solid #F0D5FA",
     marginBottom: "1.75rem",
   },
   tab: {
     flex: 1,
     background: "none",
     border: "none",
-    borderBottom: "2.5px solid transparent",
+    borderBottom: "3.5px solid transparent",
     marginBottom: "-1.5px",
     padding: "0.5rem 0",
     fontSize: "14px",
-    color: "#b8d8ee",
+    color: "#C9A0DC",
     cursor: "pointer",
     fontWeight: 400,
     fontFamily: "'DM Sans', sans-serif",
     transition: "all 0.2s",
   },
   tabActive: {
-    color: "#1A5F8A",
-    borderBottom: "2.5px solid #9CD5FF",
+    color: "#6B4E8A",
+    borderBottom: "2.5px solid #D78FEE",
     fontWeight: 500,
   },
   form: {
@@ -199,26 +199,26 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     display: "block",
     fontSize: "12px",
-    color: "#3A99E8",
+    color: "#D78FEE",
     marginBottom: "5px",
     fontWeight: 500,
   },
   input: {
     width: "100%",
-    border: "1px solid #C8E8FF",
+    border: "1px solid #F0D5FA",
     borderRadius: "10px",
     padding: "11px 14px",
     fontSize: "14px",
     fontFamily: "'DM Sans', sans-serif",
-    color: "#1A5F8A",
+    color: "#6B4E8A",
     outline: "none",
-    background: "#FAFCFF",
+    background: "#FAF0FF",
     boxSizing: "border-box",
   },
   btnMain: {
     width: "100%",
-    background: "#9CD5FF",
-    color: "#1A5F8A",
+    background: "linear-gradient(135deg, #D78FEE, #A8E6CF)",
+    color: "white",
     border: "none",
     borderRadius: "10px",
     padding: "12px",
@@ -230,27 +230,27 @@ const styles: Record<string, React.CSSProperties> = {
   },
   divider: {
     fontSize: "12px",
-    color: "#C8E8FF",
+    color: "#C9A0DC",
     margin: "1rem 0",
   },
   btnGhost: {
     width: "100%",
     background: "white",
-    color: "#3A99E8",
-    border: "1px solid #C8E8FF",
+    color: "#C9A0DC",
+    border: "1px solid #F0D5FA",
     borderRadius: "10px",
     padding: "11px",
-    fontSize: "14px",
+    fontSize: "18px",
     cursor: "pointer",
     fontFamily: "'DM Sans', sans-serif",
   },
   footer: {
     fontSize: "12px",
-    color: "#b8d8ee",
+    color: "#C9A0DC",
     marginTop: "1.25rem",
   },
   link: {
-    color: "#3A99E8",
+    color: "#D78FEE",
     cursor: "pointer",
   },
 };

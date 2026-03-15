@@ -250,6 +250,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: "2rem",
     fontWeight: 300,
     fontStyle: "italic",
+    fontFamily: "'Cormorant Garamond', serif",
   },
   searchWrap: {
     display: "flex",

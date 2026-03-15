@@ -156,7 +156,7 @@ export default function SearchResultsPage() {
         </form>
 
         <button style={styles.iconBtn} onClick={openFilter} title="Filters">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D78FEE" strokeWidth="2">
             <path d="M3 6h18M6 12h12M9 18h6" />
           </svg>
         </button>
