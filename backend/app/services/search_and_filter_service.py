@@ -17,6 +17,8 @@ def build_query(filters: SearchFilters) -> str:
         parts.append(filters.gender)
     if filters.color:
         parts.append(filters.color)
+    if filters.style:       
+        parts.append(filters.style)
 
     return " ".join(parts)
 

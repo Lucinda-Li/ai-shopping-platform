@@ -62,7 +62,7 @@ function resolveProduct(stateProduct: Product | null | undefined): Product {
 }
 
 export function ProductDetailsPage() {
-  const { productId } = useParams<{ productId: string }>()
+  const { productId: _productId } = useParams<{ productId: string }>() 
   const location = useLocation()
   const stateProduct = (location.state as { product?: Product; searchQuery?: string } | null)?.product
   const searchQuery = (location.state as { searchQuery?: string } | null)?.searchQuery ?? ''
