@@ -8,7 +8,7 @@
 .ai-tryon-header {
   padding: 1.25rem 2rem;
   background: #fff;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid #F0D5FA;
 }
 
 .ai-tryon-header__back {
@@ -19,7 +19,7 @@
 }
 
 .ai-tryon-header__back:hover {
-  color: var(--color-navy);
+  color: #6B4B7A;
 }
 
 .ai-tryon-main {
@@ -71,13 +71,13 @@
 .ai-tryon-panel__upload,
 .ai-tryon-panel__preview-box {
   min-height: 280px;
-  border: 1px dashed var(--color-border);
+  border: 1px dashed #C9A0DC;
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
+  background: #FAF0FF;
 }
 
 .ai-tryon-panel__drop {
@@ -115,7 +115,7 @@
   margin-top: 0.5rem;
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
-  color: var(--color-deep-blue);
+  color: #5BC8C8;
   cursor: pointer;
 }
 
@@ -151,7 +151,7 @@
 .ai-tryon-form {
   background: #fff;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid #F0D5FA;
   padding: 1.5rem 1.75rem;
 }
 
@@ -205,8 +205,8 @@
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-weight: 500;
-  background: var(--btn-cta-bg);
-  color: var(--btn-cta-text);
+  background: #5BC8C8;
+  color: #fff;
   border: none;
   cursor: pointer;
   font-family: var(--font-sans);
