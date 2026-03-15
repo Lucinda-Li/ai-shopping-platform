@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# AuraFit
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A unified shopping platform that lets you search across multiple retailers in one place, with **AI virtual try-on** and **wishlist** support. Built for a better clothing search experience.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Cross-platform search** — One search bar returns products from many brands (powered by SerpApi / Google Shopping).
+- **Product detail** — Gallery, size selector, “Go to official website,” and link to AI try-on.
+- **AI virtual try-on** — Upload your photo and enter height, weight, and size; get a generated try-on image and size recommendation (via fal.ai).
+- **Wishlist** — Save products and view them on a dedicated wishlist page (persisted in browser).
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer    | Stack |
+|----------|--------|
+| Frontend | React, TypeScript, Vite, React Router DOM |
+| Backend  | Python, FastAPI, Uvicorn |
+| APIs     | SerpApi (search), fal.ai (virtual try-on) |
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+ai-shopping-platform/
+├── frontend/          # React + Vite app
+│   └── src/
+│       ├── context/   # WishlistContext
+│       ├── pages/     # HomePage, SearchResultsPage, ProductDetailsPage, AiTryOnPage, WishlistPage
+│       └── ...
+├── backend/           # FastAPI app
+│   └── app/
+│       ├── main.py
+│       ├── routes/    # search_and_filter, tryon
+│       └── services/  # search_and_filter_service, tryon_service
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Setup & Run
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Node.js** (for frontend)
+- **Python 3** (for backend)
+- **API keys**: SerpApi (search), fal.ai (try-on). Place them in `backend/.env`.
+
+### Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+# Create backend/.env with SERPAPI_KEY and FAL_KEY
+python -m uvicorn app.main:app --reload --port 8000
 ```
+
+API base: `http://localhost:8000`
+
+- `POST /api/search` — body: `{ "query": "hoodie", "limit": 20 }` → returns product list.
+- `POST /tryon` — form: `user_image` (file), `cloth_image_url` (or `cloth_image`), `height`, `weight`, `size` → returns try-on image path, `recommended_size`, `bmi`.
+- Try-on result images: `http://localhost:8000/outputs/<filename>`.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Use the login flow to reach the home page, then search, open a product, add to wishlist, or try AI try-on.
+
+### Environment (backend)
+
+Create `backend/.env`:
+
+```
+SERPAPI_KEY=your_serpapi_key
+FAL_KEY=your_fal_key
+```
+
+## License
+
+MIT (or specify your license).
