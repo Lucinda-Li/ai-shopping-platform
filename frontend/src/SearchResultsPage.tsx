@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { searchClothes } from "./api";
 import type { Product as ApiProduct } from "./api";
 import type { Product as DetailProduct } from "./types/product";
@@ -171,11 +171,11 @@ export default function SearchResultsPage() {
         </button>
 
         {/* Wishlist */}
-        <button style={styles.iconBtn} title="Wishlist">
+        <Link to="/wishlist" style={styles.iconBtn} title="Wishlist" aria-label="Wishlist">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF6B8A" stroke="#FF6B8A" strokeWidth="1.5">
             <path d="M12 21C12 21 3 14 3 8.5A5.5 5.5 0 0 1 12 5.5 5.5 5.5 0 0 1 21 8.5C21 14 12 21 12 21Z" />
           </svg>
-        </button>
+        </Link>
       </div>
 
       {/* Results bar */}

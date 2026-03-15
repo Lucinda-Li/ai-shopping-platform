@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import './ProductDetailsPage.css'
 import { CustomerReviewCard } from '../components/CustomerReviewCard'
+import { useWishlist } from '../context/WishlistContext'
 import type { Product, Review } from '../types/product'
 
 // Mock data for development; replace with API later
@@ -67,8 +68,9 @@ export function ProductDetailsPage() {
   const searchQuery = (location.state as { searchQuery?: string } | null)?.searchQuery ?? ''
   const product = resolveProduct(stateProduct)
   const backToSearchUrl = searchQuery ? `/search?q=${encodeURIComponent(searchQuery)}` : '/search'
+  const { isInWishlist, toggleWishlist } = useWishlist()
+  const isWishlisted = isInWishlist(product.id)
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0] ?? '')
-  const [isWishlisted, setIsWishlisted] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const reviews = MOCK_REVIEWS
@@ -120,7 +122,7 @@ export function ProductDetailsPage() {
             <button
               type="button"
               className={`wishlist-pill ${isWishlisted ? 'wishlist-pill--active' : ''}`}
-              onClick={() => setIsWishlisted(!isWishlisted)}
+              onClick={() => toggleWishlist(product)}
               aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
             >
               <span className="wishlist-pill__icon">{isWishlisted ? '♥' : '♡'}</span>
