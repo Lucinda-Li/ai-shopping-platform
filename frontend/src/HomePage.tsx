@@ -1,30 +1,97 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useWishlist } from "./context/WishlistContext";
 
+// Trending items — 2025 viral / TikTok & Gen Z trending (Lululemon dress, Super Puff, quarter-zip, tech shell, etc.)
 const sampleProducts = [
-  { id: 1, brand: "Nike", name: "Air Max 90", price: 129.99 },
-  { id: 2, brand: "Adidas", name: "Ultra Boost 22", price: 189.0 },
-  { id: 3, brand: "Zara", name: "Linen Blazer", price: 89.9 },
-  { id: 4, brand: "H&M", name: "Slim Fit Jeans", price: 49.99 },
-  { id: 5, brand: "Uniqlo", name: "Fleece Jacket", price: 59.9 },
-  { id: 6, brand: "New Balance", name: "550 Sneakers", price: 110.0 },
-  { id: 7, brand: "Levi's", name: "501 Original", price: 69.5 },
-  { id: 8, brand: "Gucci", name: "Canvas Tote", price: 450.0 },
+  {
+    id: 1,
+    brand: "Lululemon",
+    name: "2-in-1 Maxi Dress",
+    price: 148.0,
+    imageUrl: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&q=80",
+  },
+  {
+    id: 2,
+    brand: "Aritzia",
+    name: "Super Puff™ Shorty",
+    price: 248.0,
+    imageUrl: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400&q=80",
+  },
+  {
+    id: 3,
+    brand: "Nike",
+    name: "Quarter-Zip Pullover",
+    price: 95.0,
+    imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=80",
+  },
+  {
+    id: 4,
+    brand: "Arc'teryx",
+    name: "Beta LT Jacket",
+    price: 399.0,
+    imageUrl: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&q=80",
+  },
+  {
+    id: 5,
+    brand: "New Balance",
+    name: "550",
+    price: 119.99,
+    imageUrl: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400&q=80",
+  },
+  {
+    id: 6,
+    brand: "Alo",
+    name: "Airlift High-Waist Legging",
+    price: 98.0,
+    imageUrl: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400&q=80",
+  },
+  {
+    id: 7,
+    brand: "Zara",
+    name: "Oversized Structured Blazer",
+    price: 129.0,
+    imageUrl: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80",
+  },
+  {
+    id: 8,
+    brand: "Salomon",
+    name: "XT-6 Runner",
+    price: 169.0,
+    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80",
+  },
 ];
 
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({ brand, name, price }: {
+function ProductCard({
+  brand,
+  name,
+  price,
+  imageUrl,
+  onSelect,
+}: {
   brand: string;
   name: string;
   price: number;
+  imageUrl?: string;
+  onSelect: () => void;
 }) {
   return (
-    <div style={styles.card}>
+    <div style={styles.card} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onSelect()}>
       <div style={styles.cardImg}>
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D78FEE" strokeWidth="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 9h18M9 21V9" />
-        </svg>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            loading="lazy"
+          />
+        ) : (
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D78FEE" strokeWidth="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
+          </svg>
+        )}
       </div>
       <div style={styles.cardInfo}>
         <div style={styles.cardBrand}>{brand}</div>
@@ -39,6 +106,8 @@ function ProductCard({ brand, name, price }: {
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const { wishlist } = useWishlist();
+  const wishlistCount = wishlist.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +125,20 @@ export default function HomePage() {
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
           </svg>
         </button>
-        <button style={styles.iconBtn} title="Wishlist">
+        {/* Wishlist heart — right, link to wishlist page (heart color from teammate UI) */}
+        <Link
+          to="/wishlist"
+          style={{ ...styles.iconBtn, position: "relative", textDecoration: "none" }}
+          title="Wishlist"
+          aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ""}`}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF8FAB" stroke="#FF8FAB" strokeWidth="1.5">
             <path d="M12 21C12 21 3 14 3 8.5A5.5 5.5 0 0 1 12 5.5 5.5 5.5 0 0 1 21 8.5C21 14 12 21 12 21Z" />
           </svg>
-        </button>
+          {wishlistCount > 0 && (
+            <span style={styles.wishlistBadge}>{wishlistCount}</span>
+          )}
+        </Link>
       </div>
 
       {/* Hero */}
@@ -83,9 +161,9 @@ export default function HomePage() {
         </form>
       </div>
 
-      {/* Trending items */}
-      {/* <div style={styles.trending}>
-        <div style={styles.sectionTitle}>Trending Items</div>
+      {/* Trending items — scrollable grid */}
+      <section style={styles.trending} aria-label="Trending items">
+        <h2 style={styles.sectionTitle}>Trending Items</h2>
         <div style={styles.cardsGrid}>
           {sampleProducts.map((product) => (
             <ProductCard
@@ -93,10 +171,12 @@ export default function HomePage() {
               brand={product.brand}
               name={product.name}
               price={product.price}
+              imageUrl={product.imageUrl}
+              onSelect={() => navigate(`/search?q=${encodeURIComponent(product.name)}`)}
             />
           ))}
         </div>
-      </div> */}
+      </section>
 
     </div>
   );
@@ -129,6 +209,22 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
+  },
+  wishlistBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    background: "#FF6B8A",
+    color: "white",
+    fontSize: 11,
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 4px",
   },
   hero: {
     display: "flex",
@@ -188,7 +284,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "16px",
+    gap: "20px",
   },
   card: {
     border: "1px solid #F0D5FA",
@@ -196,6 +292,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     cursor: "pointer",
     background: "white",
+    transition: "box-shadow 0.2s ease, border-color 0.2s ease",
   },
   cardImg: {
     width: "100%",
@@ -204,6 +301,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   cardInfo: {
     padding: "10px 12px 14px",
