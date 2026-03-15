@@ -54,6 +54,7 @@ const filterOptions = [
   { key: "gender",     label: "Gender",      options: ["All", "Men", "Women", "Unisex"] },
   { key: "color",      label: "Color",       options: ["All", "Black", "White", "Blue", "Red", "Green", "Yellow", "Grey", "Purple", "Pink"] },
   { key: "priceRange", label: "Price range", options: ["All", "Under $50", "$50–$100", "$100–$200", "$200+"] },
+  { key: "style",      label: "Style",       options: ["All", "Casual", "Formal", "Streetwear", "Bohemian", "Minimalist", "Vintage", "Sporty", "Business", "Party", "Sexy"] },
 ];
 
 type Filters = Record<string, string>;
@@ -62,6 +63,7 @@ const defaultFilters: Filters = {
   gender: "All",
   color: "All",
   priceRange: "All",
+  style: "All",
 };
 
 // Converts price range string → min/max numbers the backend understands
@@ -102,11 +104,12 @@ export default function SearchResultsPage() {
 
         const data = await searchClothes({
           query:     initialQuery,
-          limit:     20,
+          limit:     40,
           gender:    filters.gender !== "All" ? filters.gender.toLowerCase() : undefined,
           color:     filters.color  !== "All" ? filters.color.toLowerCase()  : undefined,
           min_price,
           max_price,
+          style:     filters.style  !== "All" ? filters.style.toLowerCase()  : undefined,
         });
 
         setResults(data);

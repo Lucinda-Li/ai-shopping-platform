@@ -6,6 +6,7 @@ export interface SearchFilters {
   color?: string;
   min_price?: number;
   max_price?: number;
+  style?: string; 
   limit?: number;
 }
 

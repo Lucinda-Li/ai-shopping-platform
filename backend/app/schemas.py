@@ -7,4 +7,5 @@ class SearchFilters(BaseModel):
     color: Optional[str] = None          # "blue", "black", etc. — optional
     min_price: Optional[float] = None    # e.g. 20.0 — optional
     max_price: Optional[float] = None    # e.g. 100.0 — optional
-    limit: int = 20
+    style: Optional[str] = None 
+    limit: int = 40
